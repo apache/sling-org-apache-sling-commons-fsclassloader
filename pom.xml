@@ -38,9 +38,9 @@
     </description>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/sling/trunk/bundles/commons/fsclassloader</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/sling/trunk/bundles/commons/fsclassloader</developerConnection>
-        <url>http://svn.apache.org/viewvc/sling/trunk/bundles/commons/fsclassloader</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-commons-fsclassloader.git</conncetion>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-commons-fsclassloader.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-commons-fsclassloader.git</url>
     </scm>
 
     <build>
