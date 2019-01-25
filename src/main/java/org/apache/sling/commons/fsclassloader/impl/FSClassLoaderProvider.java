@@ -175,7 +175,11 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 			final ServiceReference<DynamicClassLoaderManager> localDynamicClassLoaderManager = this.dynamicClassLoaderManager;
 			final Bundle localCallerBundle = this.callerBundle;
 			if (localDynamicClassLoaderManager != null && localCallerBundle != null) {
-				localCallerBundle.getBundleContext().ungetService(localDynamicClassLoaderManager);
+                            try {
+		                localCallerBundle.getBundleContext().ungetService(localDynamicClassLoaderManager);
+                            } catch (Exception ex) {
+                                // Ignore, this is a best effort - likely the calling bundle has been stopped already
+                            }
 			}
 		}
 	}
