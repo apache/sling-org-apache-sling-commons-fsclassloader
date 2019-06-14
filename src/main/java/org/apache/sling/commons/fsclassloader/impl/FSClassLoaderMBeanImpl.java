@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.sling.commons.fsclassloader.FSClassLoaderMBean;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +37,13 @@ import org.slf4j.LoggerFactory;
  * Implementation of the FSClassLoaderMBean interface
  */
 public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
-	private final BundleContext context;
+	private final File root;
 	private final FSClassLoaderProvider fsClassLoaderProvider;
 	private static final Logger log = LoggerFactory.getLogger(FSClassLoaderMBeanImpl.class);
 
-	public FSClassLoaderMBeanImpl(final FSClassLoaderProvider fsClassLoaderProvider, final BundleContext context) {
+	public FSClassLoaderMBeanImpl(final FSClassLoaderProvider fsClassLoaderProvider, final File root) {
 		this.fsClassLoaderProvider = fsClassLoaderProvider;
-		this.context = context;
+		this.root = root;
 	}
 
 	/*
@@ -76,7 +75,6 @@ public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
 		Collection<String> scripts = new HashSet<String>();
 		try {
 			Map<String, ScriptFiles> s = new LinkedHashMap<String, ScriptFiles>();
-			File root = new File(context.getDataFile(""), "classes");
 			if (root != null) {
 				FSClassLoaderWebConsole.readFiles(root, root, s);
 			}
@@ -106,7 +104,7 @@ public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
 	 */
 	@Override
 	public String getFSClassLoaderRoot() {
-		return new File(context.getDataFile(""), "classes").getAbsolutePath();
+		return root.getAbsolutePath();
 	}
 
 }

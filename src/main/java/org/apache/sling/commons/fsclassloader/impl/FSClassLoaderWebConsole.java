@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  * and Class files.
  */
 @Component(service = Servlet.class,
+    configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
     property = {
          "service.description=Web Console for the FileSystem Class Loader",
 		 "service.vendor=The Apache Software Foundation",
@@ -93,9 +94,9 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
 	 * @throws MalformedURLException
 	 */
 	@Activate
-	protected void activate(final ComponentContext componentContext) throws MalformedURLException {
+	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) throws MalformedURLException {
 		// get the file root
-		root = new File(componentContext.getBundleContext().getDataFile(""), "classes");
+		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 	}
 
 	/*

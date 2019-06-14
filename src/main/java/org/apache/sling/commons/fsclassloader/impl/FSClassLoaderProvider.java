@@ -53,6 +53,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +63,14 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Component(service = ClassLoaderWriter.class, scope = ServiceScope.BUNDLE,
+    configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
     property = {
             Constants.SERVICE_RANKING + ":Integer=100"
     })
+@Designate(ocd = FSClassLoaderComponentConfig.class)
 public class FSClassLoaderProvider implements ClassLoaderWriter {
+
+	public static final String SHARED_CONFIGURATION_PID = "org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider";
 
 	private static final String LISTENER_FILTER = "(" + Constants.OBJECTCLASS + "="
 			+ ClassLoaderWriterListener.class.getName() + ")";
@@ -102,10 +107,10 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 	 * @throws MalformedObjectNameException
 	 */
 	@Activate
-	protected void activate(final ComponentContext componentContext)
+	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config)
 			throws MalformedURLException, InvalidSyntaxException, MalformedObjectNameException {
 		// get the file root
-		this.root = new File(componentContext.getBundleContext().getDataFile(""), "classes");
+		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 		this.root.mkdirs();
 		this.rootURL = this.root.toURI().toURL();
 		this.callerBundle = componentContext.getUsingBundle();
@@ -147,7 +152,7 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 		mbeanProps.put(Constants.SERVICE_VENDOR, "The Apache Software Foundation");
 		mbeanProps.put("jmx.objectname", new ObjectName("org.apache.sling.classloader", jmxProps));
 		mbeanRegistration = componentContext.getBundleContext().registerService(FSClassLoaderMBean.class.getName(),
-				new FSClassLoaderMBeanImpl(this, componentContext.getBundleContext()), mbeanProps);
+				new FSClassLoaderMBeanImpl(this, this.root), mbeanProps);
 	}
 
 	/**
