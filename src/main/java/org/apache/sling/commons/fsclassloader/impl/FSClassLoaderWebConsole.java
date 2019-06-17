@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
-import java.net.MalformedURLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -91,10 +90,9 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
 	 *
 	 * @param componentContext
 	 *            the component context
-	 * @throws MalformedURLException
 	 */
 	@Activate
-	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) throws MalformedURLException {
+	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
 		// get the file root
 		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 	}
