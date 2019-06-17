@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
-import java.net.MalformedURLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -50,6 +49,7 @@ import org.slf4j.LoggerFactory;
  * and Class files.
  */
 @Component(service = Servlet.class,
+    configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
     property = {
          "service.description=Web Console for the FileSystem Class Loader",
 		 "service.vendor=The Apache Software Foundation",
@@ -90,12 +90,11 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
 	 *
 	 * @param componentContext
 	 *            the component context
-	 * @throws MalformedURLException
 	 */
 	@Activate
-	protected void activate(final ComponentContext componentContext) throws MalformedURLException {
+	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
 		// get the file root
-		root = new File(componentContext.getBundleContext().getDataFile(""), "classes");
+		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 	}
 
 	/*
