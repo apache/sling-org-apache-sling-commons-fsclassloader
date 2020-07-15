@@ -29,21 +29,44 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.sling.commons.classloader.ClassLoaderWriter;
 import org.apache.sling.commons.fsclassloader.FSClassLoaderMBean;
+import org.osgi.framework.Constants;
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the FSClassLoaderMBean interface
  */
+@Component(
+	configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
+	property = {
+		Constants.SERVICE_DESCRIPTION + "=Apache Sling FSClassLoader Controller Service",
+		Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
+		"jmx.objectname=org.apache.sling.classloader:name=FSClassLoader,type=ClassLoader"
+	}
+)
 public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
-	private final File root;
-	private final FSClassLoaderProvider fsClassLoaderProvider;
+	private volatile File root;
 	private static final Logger log = LoggerFactory.getLogger(FSClassLoaderMBeanImpl.class);
 
-	public FSClassLoaderMBeanImpl(final FSClassLoaderProvider fsClassLoaderProvider, final File root) {
-		this.fsClassLoaderProvider = fsClassLoaderProvider;
-		this.root = root;
+	@Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
+	private ClassLoaderWriter classLoaderWriter;
+
+	/**
+	 * Activate this component. Create the root directory.
+	 *
+	 * @param componentContext
+	 *            the component context
+	 */
+	@Activate
+	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
+		// get the file root
+		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 	}
 
 	/*
@@ -93,7 +116,7 @@ public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
 	 */
 	@Override
 	public void clearCache() {
-		fsClassLoaderProvider.delete("");
+		classLoaderWriter.delete("");
 	}
 
 	/*
