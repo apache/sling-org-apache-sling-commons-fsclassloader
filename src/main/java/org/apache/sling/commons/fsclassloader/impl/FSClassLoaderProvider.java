@@ -96,8 +96,6 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 	/** The bundle asking for this service instance */
 	private Bundle callerBundle;
 
-	private static ServiceRegistration<?> mbeanRegistration;
-
 	/**
 	 * Activate this component. Create the root directory.
 	 *
@@ -137,22 +135,6 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 			}
 		};
 		componentContext.getBundleContext().addServiceListener(classLoaderWriterServiceListener, LISTENER_FILTER);
-
-		// handle the MBean Installation
-		if (mbeanRegistration != null) {
-			mbeanRegistration.unregister();
-			mbeanRegistration = null;
-		}
-		Hashtable<String, String> jmxProps = new Hashtable<String, String>();
-		jmxProps.put("type", "ClassLoader");
-		jmxProps.put("name", "FSClassLoader");
-
-		final Hashtable<String, Object> mbeanProps = new Hashtable<String, Object>();
-		mbeanProps.put(Constants.SERVICE_DESCRIPTION, "Apache Sling FSClassLoader Controller Service");
-		mbeanProps.put(Constants.SERVICE_VENDOR, "The Apache Software Foundation");
-		mbeanProps.put("jmx.objectname", new ObjectName("org.apache.sling.classloader", jmxProps));
-		mbeanRegistration = componentContext.getBundleContext().registerService(FSClassLoaderMBean.class.getName(),
-				new FSClassLoaderMBeanImpl(this, this.root), mbeanProps);
 	}
 
 	/**
@@ -165,10 +147,6 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 		this.destroyClassLoader();
 		if (classLoaderWriterServiceListener != null) {
 			componentContext.getBundleContext().removeServiceListener(classLoaderWriterServiceListener);
-		}
-		if (mbeanRegistration != null) {
-			mbeanRegistration.unregister();
-			mbeanRegistration = null;
 		}
 	}
 
