@@ -29,24 +29,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 import org.apache.sling.commons.classloader.ClassLoaderWriter;
 import org.apache.sling.commons.classloader.ClassLoaderWriterListener;
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
-import org.apache.sling.commons.fsclassloader.FSClassLoaderMBean;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -102,11 +96,10 @@ public class FSClassLoaderProvider implements ClassLoaderWriter {
 	 * @param componentContext
 	 * @throws MalformedURLException
 	 * @throws InvalidSyntaxException
-	 * @throws MalformedObjectNameException
 	 */
 	@Activate
 	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config)
-			throws MalformedURLException, InvalidSyntaxException, MalformedObjectNameException {
+			throws MalformedURLException, InvalidSyntaxException {
 		// get the file root
 		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
 		this.root.mkdirs();
