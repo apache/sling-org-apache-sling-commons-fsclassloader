@@ -56,278 +56,282 @@ import org.slf4j.LoggerFactory;
  * which uses the file system to store and read class files from.
  *
  */
-@Component(service = ClassLoaderWriter.class, scope = ServiceScope.BUNDLE,
-    configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
-    property = {
-            Constants.SERVICE_RANKING + ":Integer=100"
-    })
+@Component(
+        service = ClassLoaderWriter.class,
+        scope = ServiceScope.BUNDLE,
+        configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
+        property = {Constants.SERVICE_RANKING + ":Integer=100"})
 @Designate(ocd = FSClassLoaderComponentConfig.class)
 public class FSClassLoaderProvider implements ClassLoaderWriter {
 
-	public static final String SHARED_CONFIGURATION_PID = "org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider";
+    public static final String SHARED_CONFIGURATION_PID =
+            "org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider";
 
-	private static final String LISTENER_FILTER = "(" + Constants.OBJECTCLASS + "="
-			+ ClassLoaderWriterListener.class.getName() + ")";
+    private static final String LISTENER_FILTER =
+            "(" + Constants.OBJECTCLASS + "=" + ClassLoaderWriterListener.class.getName() + ")";
 
-	/** File root */
-	private File root;
+    /** File root */
+    private File root;
 
-	/** File root URL */
-	private URL rootURL;
+    /** File root URL */
+    private URL rootURL;
 
-	/** Current class loader */
-	private FSDynamicClassLoader loader;
+    /** Current class loader */
+    private FSDynamicClassLoader loader;
 
-	private static ServiceListener classLoaderWriterServiceListener;
+    private static ServiceListener classLoaderWriterServiceListener;
 
-	private Map<Long, ServiceReference<ClassLoaderWriterListener>> classLoaderWriterListeners = new HashMap<Long, ServiceReference<ClassLoaderWriterListener>>();
+    private Map<Long, ServiceReference<ClassLoaderWriterListener>> classLoaderWriterListeners =
+            new HashMap<Long, ServiceReference<ClassLoaderWriterListener>>();
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@Reference(service = DynamicClassLoaderManager.class)
-	private ServiceReference<DynamicClassLoaderManager> dynamicClassLoaderManager;
+    @Reference(service = DynamicClassLoaderManager.class)
+    private ServiceReference<DynamicClassLoaderManager> dynamicClassLoaderManager;
 
-	/** The bundle asking for this service instance */
-	private Bundle callerBundle;
+    /** The bundle asking for this service instance */
+    private Bundle callerBundle;
 
-	/**
-	 * Activate this component. Create the root directory.
-	 *
-	 * @param componentContext
-	 * @throws MalformedURLException
-	 * @throws InvalidSyntaxException
-	 */
-	@Activate
-	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config)
-			throws MalformedURLException, InvalidSyntaxException {
-		// get the file root
-		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
-		this.root.mkdirs();
-		this.rootURL = this.root.toURI().toURL();
-		this.callerBundle = componentContext.getUsingBundle();
+    /**
+     * Activate this component. Create the root directory.
+     *
+     * @param componentContext
+     * @throws MalformedURLException
+     * @throws InvalidSyntaxException
+     */
+    @Activate
+    protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config)
+            throws MalformedURLException, InvalidSyntaxException {
+        // get the file root
+        this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
+        this.root.mkdirs();
+        this.rootURL = this.root.toURI().toURL();
+        this.callerBundle = componentContext.getUsingBundle();
 
-		classLoaderWriterListeners.clear();
-		if (classLoaderWriterServiceListener != null) {
-			componentContext.getBundleContext().removeServiceListener(classLoaderWriterServiceListener);
-			classLoaderWriterServiceListener = null;
-		}
-		classLoaderWriterServiceListener = new ServiceListener() {
-			@Override
-			public void serviceChanged(ServiceEvent event) {
-				ServiceReference<ClassLoaderWriterListener> reference = (ServiceReference<ClassLoaderWriterListener>) event
-						.getServiceReference();
-				if (event.getType() == ServiceEvent.MODIFIED || event.getType() == ServiceEvent.REGISTERED) {
-					classLoaderWriterListeners.put(getId(reference), reference);
-				} else {
-					classLoaderWriterListeners.remove(getId(reference));
-				}
-			}
+        classLoaderWriterListeners.clear();
+        if (classLoaderWriterServiceListener != null) {
+            componentContext.getBundleContext().removeServiceListener(classLoaderWriterServiceListener);
+            classLoaderWriterServiceListener = null;
+        }
+        classLoaderWriterServiceListener = new ServiceListener() {
+            @Override
+            public void serviceChanged(ServiceEvent event) {
+                ServiceReference<ClassLoaderWriterListener> reference =
+                        (ServiceReference<ClassLoaderWriterListener>) event.getServiceReference();
+                if (event.getType() == ServiceEvent.MODIFIED || event.getType() == ServiceEvent.REGISTERED) {
+                    classLoaderWriterListeners.put(getId(reference), reference);
+                } else {
+                    classLoaderWriterListeners.remove(getId(reference));
+                }
+            }
 
-			private Long getId(ServiceReference<ClassLoaderWriterListener> reference) {
-			    return (Long)reference.getProperty(Constants.SERVICE_ID);
-			}
-		};
-		componentContext.getBundleContext().addServiceListener(classLoaderWriterServiceListener, LISTENER_FILTER);
-	}
+            private Long getId(ServiceReference<ClassLoaderWriterListener> reference) {
+                return (Long) reference.getProperty(Constants.SERVICE_ID);
+            }
+        };
+        componentContext.getBundleContext().addServiceListener(classLoaderWriterServiceListener, LISTENER_FILTER);
+    }
 
-	/**
-	 * Deactivate this component. Create the root directory.
-	 */
-	@Deactivate
-	protected void deactivate(ComponentContext componentContext) {
-		this.root = null;
-		this.rootURL = null;
-		this.destroyClassLoader();
-		if (classLoaderWriterServiceListener != null) {
-			componentContext.getBundleContext().removeServiceListener(classLoaderWriterServiceListener);
-		}
-	}
+    /**
+     * Deactivate this component. Create the root directory.
+     */
+    @Deactivate
+    protected void deactivate(ComponentContext componentContext) {
+        this.root = null;
+        this.rootURL = null;
+        this.destroyClassLoader();
+        if (classLoaderWriterServiceListener != null) {
+            componentContext.getBundleContext().removeServiceListener(classLoaderWriterServiceListener);
+        }
+    }
 
-	private void destroyClassLoader() {
-		final ClassLoader rcl = this.loader;
-		if (rcl != null) {
-			this.loader = null;
+    private void destroyClassLoader() {
+        final ClassLoader rcl = this.loader;
+        if (rcl != null) {
+            this.loader = null;
 
-			final ServiceReference<DynamicClassLoaderManager> localDynamicClassLoaderManager = this.dynamicClassLoaderManager;
-			final Bundle localCallerBundle = this.callerBundle;
-			if (localDynamicClassLoaderManager != null && localCallerBundle != null) {
-                            try {
-		                localCallerBundle.getBundleContext().ungetService(localDynamicClassLoaderManager);
-                            } catch (Exception ex) {
-                                // Ignore, this is a best effort - likely the calling bundle has been stopped already
-                            }
-			}
-		}
-	}
+            final ServiceReference<DynamicClassLoaderManager> localDynamicClassLoaderManager =
+                    this.dynamicClassLoaderManager;
+            final Bundle localCallerBundle = this.callerBundle;
+            if (localDynamicClassLoaderManager != null && localCallerBundle != null) {
+                try {
+                    localCallerBundle.getBundleContext().ungetService(localDynamicClassLoaderManager);
+                } catch (Exception ex) {
+                    // Ignore, this is a best effort - likely the calling bundle has been stopped already
+                }
+            }
+        }
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getClassLoader()
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getClassLoader()
+     */
+    @Override
     public ClassLoader getClassLoader() {
-		synchronized (this) {
-			if (loader == null || !loader.isLive()) {
-				this.destroyClassLoader();
-				// get the dynamic class loader for the bundle using this
-				// class loader writer
-				final DynamicClassLoaderManager dclm = this.callerBundle.getBundleContext()
-						.getService(this.dynamicClassLoaderManager);
+        synchronized (this) {
+            if (loader == null || !loader.isLive()) {
+                this.destroyClassLoader();
+                // get the dynamic class loader for the bundle using this
+                // class loader writer
+                final DynamicClassLoaderManager dclm =
+                        this.callerBundle.getBundleContext().getService(this.dynamicClassLoaderManager);
 
-				loader = new FSDynamicClassLoader(new URL[] { this.rootURL }, dclm.getDynamicClassLoader());
-			}
-			return this.loader;
-		}
-	}
+                loader = new FSDynamicClassLoader(new URL[] {this.rootURL}, dclm.getDynamicClassLoader());
+            }
+            return this.loader;
+        }
+    }
 
-	private void checkClassLoader(final String filePath) {
-		if (filePath.endsWith(".class")) {
-			// remove store directory and .class
-			final String path = filePath.substring(this.root.getAbsolutePath().length() + 1, filePath.length() - 6);
-			// convert to a class name
-			final String className = path.replace(File.separatorChar, '.');
+    private void checkClassLoader(final String filePath) {
+        if (filePath.endsWith(".class")) {
+            // remove store directory and .class
+            final String path = filePath.substring(this.root.getAbsolutePath().length() + 1, filePath.length() - 6);
+            // convert to a class name
+            final String className = path.replace(File.separatorChar, '.');
 
-			synchronized (this) {
-				final FSDynamicClassLoader currentLoader = this.loader;
-				if (currentLoader != null) {
-					currentLoader.check(className);
-				}
-			}
-		}
-	}
+            synchronized (this) {
+                final FSDynamicClassLoader currentLoader = this.loader;
+                if (currentLoader != null) {
+                    currentLoader.check(className);
+                }
+            }
+        }
+    }
 
-	// ---------- SCR Integration ----------------------------------------------
+    // ---------- SCR Integration ----------------------------------------------
 
-	private boolean deleteRecursive(final File f, final List<String> names) {
-		if (f.isDirectory()) {
-			for (final File c : f.listFiles()) {
-				if (!deleteRecursive(c, names)) {
-					return false;
-				}
-			}
-		}
-		names.add(f.getAbsolutePath());
-		return f.delete();
-	}
+    private boolean deleteRecursive(final File f, final List<String> names) {
+        if (f.isDirectory()) {
+            for (final File c : f.listFiles()) {
+                if (!deleteRecursive(c, names)) {
+                    return false;
+                }
+            }
+        }
+        names.add(f.getAbsolutePath());
+        return f.delete();
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#delete(java.lang.String)
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#delete(java.lang.String)
+     */
+    @Override
     public boolean delete(final String name) {
-		final String path = cleanPath(name);
-		final File file = new File(path);
-		if (file.exists()) {
-			final List<String> names = new ArrayList<String>();
-			final boolean result = deleteRecursive(file, names);
-			logger.debug("Deleted {} : {}", name, result);
-			if (result) {
-				for (final String n : names) {
-					this.checkClassLoader(n);
-				}
-				for (ServiceReference<ClassLoaderWriterListener> reference : classLoaderWriterListeners.values()) {
-					if (reference != null) {
-						ClassLoaderWriterListener listener = callerBundle.getBundleContext().getService(reference);
-						if (listener != null) {
-							listener.onClassLoaderClear(name);
-						} else {
-							logger.warn("Found ClassLoaderWriterListener Service reference with no service bound");
-						}
-					}
-				}
-			}
+        final String path = cleanPath(name);
+        final File file = new File(path);
+        if (file.exists()) {
+            final List<String> names = new ArrayList<String>();
+            final boolean result = deleteRecursive(file, names);
+            logger.debug("Deleted {} : {}", name, result);
+            if (result) {
+                for (final String n : names) {
+                    this.checkClassLoader(n);
+                }
+                for (ServiceReference<ClassLoaderWriterListener> reference : classLoaderWriterListeners.values()) {
+                    if (reference != null) {
+                        ClassLoaderWriterListener listener =
+                                callerBundle.getBundleContext().getService(reference);
+                        if (listener != null) {
+                            listener.onClassLoaderClear(name);
+                        } else {
+                            logger.warn("Found ClassLoaderWriterListener Service reference with no service bound");
+                        }
+                    }
+                }
+            }
 
-			return result;
-		}
-		// file does not exist so we return false
-		return false;
-	}
+            return result;
+        }
+        // file does not exist so we return false
+        return false;
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getOutputStream(java.lang.String)
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getOutputStream(java.lang.String)
+     */
+    @Override
     public OutputStream getOutputStream(final String name) {
-		logger.debug("Get stream for {}", name);
-		final String path = cleanPath(name);
-		final File file = new File(path);
-		final File parentDir = file.getParentFile();
-		if (!parentDir.exists()) {
-			parentDir.mkdirs();
-		}
-		try {
-			if (file.exists()) {
-				this.checkClassLoader(path);
-			}
-			return new FileOutputStream(path);
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
+        logger.debug("Get stream for {}", name);
+        final String path = cleanPath(name);
+        final File file = new File(path);
+        final File parentDir = file.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        try {
+            if (file.exists()) {
+                this.checkClassLoader(path);
+            }
+            return new FileOutputStream(path);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#rename(java.lang.String,
-	 *      java.lang.String)
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#rename(java.lang.String,
+     *      java.lang.String)
+     */
+    @Override
     public boolean rename(final String oldName, final String newName) {
-		logger.debug("Rename {} to {}", oldName, newName);
-		final String oldPath = cleanPath(oldName);
-		final String newPath = cleanPath(newName);
-		final File old = new File(oldPath);
-		final boolean result = old.renameTo(new File(newPath));
-		if (result) {
-			this.checkClassLoader(oldPath);
-			this.checkClassLoader(newPath);
-		}
-		return result;
-	}
+        logger.debug("Rename {} to {}", oldName, newName);
+        final String oldPath = cleanPath(oldName);
+        final String newPath = cleanPath(newName);
+        final File old = new File(oldPath);
+        final boolean result = old.renameTo(new File(newPath));
+        if (result) {
+            this.checkClassLoader(oldPath);
+            this.checkClassLoader(newPath);
+        }
+        return result;
+    }
 
-	/**
-	 * Clean the path by converting slashes to the correct format and prefixing
-	 * the root directory.
-	 *
-	 * @param path
-	 *            The path
-	 * @return The file path
-	 */
-	private String cleanPath(String path) {
-		// replace backslash by slash
-		path = path.replace('\\', '/');
+    /**
+     * Clean the path by converting slashes to the correct format and prefixing
+     * the root directory.
+     *
+     * @param path
+     *            The path
+     * @return The file path
+     */
+    private String cleanPath(String path) {
+        // replace backslash by slash
+        path = path.replace('\\', '/');
 
-		// cut off trailing slash
-		while (path.endsWith("/")) {
-			path = path.substring(0, path.length() - 1);
-		}
-		if (File.separatorChar != '/') {
-			path = path.replace('/', File.separatorChar);
-		}
-		return this.root.getAbsolutePath() + path;
-	}
+        // cut off trailing slash
+        while (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        if (File.separatorChar != '/') {
+            path = path.replace('/', File.separatorChar);
+        }
+        return this.root.getAbsolutePath() + path;
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getInputStream(java.lang.String)
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getInputStream(java.lang.String)
+     */
+    @Override
     public InputStream getInputStream(final String name) throws IOException {
-		logger.debug("Get input stream of {}", name);
-		final String path = cleanPath(name);
-		final File file = new File(path);
-		return new FileInputStream(file);
-	}
+        logger.debug("Get input stream of {}", name);
+        final String path = cleanPath(name);
+        final File file = new File(path);
+        return new FileInputStream(file);
+    }
 
-	/**
-	 * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getLastModified(java.lang.String)
-	 */
-	@Override
+    /**
+     * @see org.apache.sling.commons.classloader.ClassLoaderWriter#getLastModified(java.lang.String)
+     */
+    @Override
     public long getLastModified(final String name) {
-		logger.debug("Get last modified of {}", name);
-		final String path = cleanPath(name);
-		final File file = new File(path);
-		if (file.exists()) {
-			return file.lastModified();
-		}
+        logger.debug("Get last modified of {}", name);
+        final String path = cleanPath(name);
+        final File file = new File(path);
+        if (file.exists()) {
+            return file.lastModified();
+        }
 
-		// fallback to "non-existant" in case of problems
-		return -1;
-	}
+        // fallback to "non-existant" in case of problems
+        return -1;
+    }
 }
