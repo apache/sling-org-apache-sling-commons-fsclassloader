@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling-bundle-parent</artifactId>
-        <version>49</version>
+        <version>62</version>
         <relativePath />
     </parent>
 
@@ -35,6 +35,10 @@
         The Sling Commons FileSystem ClassLoader bundle provides a dynamic class loader for reading
         and writing class files from and to the file system.
     </description>
+
+    <properties>
+        <sling.java.version>8</sling.java.version>
+    </properties>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-commons-fsclassloader.git</connection>
@@ -69,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>osgi.core</artifactId>
+            <artifactId>org.osgi.framework</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
