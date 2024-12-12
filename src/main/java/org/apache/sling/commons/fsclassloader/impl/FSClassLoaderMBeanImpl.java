@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.sling.commons.fsclassloader.impl;
 
 import java.io.File;
@@ -43,91 +42,89 @@ import org.slf4j.LoggerFactory;
  * Implementation of the FSClassLoaderMBean interface
  */
 @Component(
-	configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
-	property = {
-		Constants.SERVICE_DESCRIPTION + "=Apache Sling FSClassLoader Controller Service",
-		Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
-		"jmx.objectname=org.apache.sling.classloader:name=FSClassLoader,type=ClassLoader"
-	}
-)
+        configurationPid = FSClassLoaderProvider.SHARED_CONFIGURATION_PID,
+        property = {
+            Constants.SERVICE_DESCRIPTION + "=Apache Sling FSClassLoader Controller Service",
+            Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
+            "jmx.objectname=org.apache.sling.classloader:name=FSClassLoader,type=ClassLoader"
+        })
 public class FSClassLoaderMBeanImpl implements FSClassLoaderMBean {
-	private volatile File root;
-	private static final Logger log = LoggerFactory.getLogger(FSClassLoaderMBeanImpl.class);
+    private volatile File root;
+    private static final Logger log = LoggerFactory.getLogger(FSClassLoaderMBeanImpl.class);
 
-	@Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
-	private ClassLoaderWriter classLoaderWriter;
+    @Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
+    private ClassLoaderWriter classLoaderWriter;
 
-	/**
-	 * Activate this component. Create the root directory.
-	 *
-	 * @param componentContext
-	 *            the component context
-	 */
-	@Activate
-	protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
-		// get the file root
-		this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
-	}
+    /**
+     * Activate this component. Create the root directory.
+     *
+     * @param componentContext
+     *            the component context
+     */
+    @Activate
+    protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
+        // get the file root
+        this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
-	 * getCachedScriptCount()
-	 */
-	@Override
-	public int getCachedScriptCount() throws IOException {
-		return getScripts().size();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
+     * getCachedScriptCount()
+     */
+    @Override
+    public int getCachedScriptCount() throws IOException {
+        return getScripts().size();
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
-	 * getCachedScripts()
-	 */
-	@Override
-	public List<String> getCachedScripts() {
-		List<String> scripts = new ArrayList<String>();
-		scripts.addAll(getScripts());
-		Collections.sort(scripts);
-		return scripts;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
+     * getCachedScripts()
+     */
+    @Override
+    public List<String> getCachedScripts() {
+        List<String> scripts = new ArrayList<String>();
+        scripts.addAll(getScripts());
+        Collections.sort(scripts);
+        return scripts;
+    }
 
-	private Collection<String> getScripts() {
-		Collection<String> scripts = new HashSet<String>();
-		try {
-			Map<String, ScriptFiles> s = new LinkedHashMap<String, ScriptFiles>();
-			if (root != null) {
-				FSClassLoaderWebConsole.readFiles(root, root, s);
-			}
-			scripts = s.keySet();
-		} catch (Exception e) {
-			log.warn("Exception retrieving scripts from FSClassLoader", e);
-		}
-		return scripts;
-	}
+    private Collection<String> getScripts() {
+        Collection<String> scripts = new HashSet<String>();
+        try {
+            Map<String, ScriptFiles> s = new LinkedHashMap<String, ScriptFiles>();
+            if (root != null) {
+                FSClassLoaderWebConsole.readFiles(root, root, s);
+            }
+            scripts = s.keySet();
+        } catch (Exception e) {
+            log.warn("Exception retrieving scripts from FSClassLoader", e);
+        }
+        return scripts;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#clearCache()
-	 */
-	@Override
-	public void clearCache() {
-		classLoaderWriter.delete("");
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#clearCache()
+     */
+    @Override
+    public void clearCache() {
+        classLoaderWriter.delete("");
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
-	 * getFSClassLoaderRoot()
-	 */
-	@Override
-	public String getFSClassLoaderRoot() {
-		return root.getAbsolutePath();
-	}
-
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.sling.commons.fsclassloader.FSClassLoaderMBean#
+     * getFSClassLoaderRoot()
+     */
+    @Override
+    public String getFSClassLoaderRoot() {
+        return root.getAbsolutePath();
+    }
 }

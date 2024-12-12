@@ -26,18 +26,16 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  */
 @ObjectClassDefinition(
         name = "FileSystem Class Loader",
-        description = "Uses the file system to store and read class files from."
-)
+        description = "Uses the file system to store and read class files from.")
 @interface FSClassLoaderComponentConfig {
- 
+
     /**
      * Location of the filesystem compiled scripts cache
      */
-	@AttributeDefinition(
+    @AttributeDefinition(
             name = "Location of the filesystem compiled scripts cache",
             description = "Controls where the filesystem compiled scripts cache is stored. When the value "
                     + "is set to null (default) the cache is stored on the bundle persistent "
-                    + "storage area."
-            )
+                    + "storage area.")
     String fsclassloader_fileSystemCompiledScriptsCacheLocation();
 }

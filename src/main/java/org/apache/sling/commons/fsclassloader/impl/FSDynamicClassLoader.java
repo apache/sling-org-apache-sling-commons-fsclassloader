@@ -21,15 +21,12 @@ package org.apache.sling.commons.fsclassloader.impl;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.sling.commons.classloader.DynamicClassLoader;
 
-public class FSDynamicClassLoader
-    extends URLClassLoader
-    implements DynamicClassLoader {
+public class FSDynamicClassLoader extends URLClassLoader implements DynamicClassLoader {
 
     private volatile boolean isDirty = false;
 
@@ -39,7 +36,7 @@ public class FSDynamicClassLoader
 
     public FSDynamicClassLoader(final URL[] urls, final ClassLoader parent) {
         super(urls, parent);
-        parentLoader = (parent instanceof DynamicClassLoader ? (DynamicClassLoader)parent : null);
+        parentLoader = (parent instanceof DynamicClassLoader ? (DynamicClassLoader) parent : null);
     }
 
     /**
@@ -62,7 +59,7 @@ public class FSDynamicClassLoader
     }
 
     public void check(final String className) {
-        if ( !this.isDirty ) {
+        if (!this.isDirty) {
             this.isDirty = loads.contains(className);
         }
     }

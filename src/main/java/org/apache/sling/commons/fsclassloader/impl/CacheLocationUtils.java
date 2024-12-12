@@ -28,15 +28,11 @@ import org.osgi.framework.BundleContext;
  */
 public class CacheLocationUtils {
 
-	private CacheLocationUtils() {
-    }
-    
+    private CacheLocationUtils() {}
+
     public static File getRootDir(final BundleContext context, final FSClassLoaderComponentConfig config) {
         String cacheLocation = config.fsclassloader_fileSystemCompiledScriptsCacheLocation();
-        if (StringUtils.isBlank(cacheLocation))
-            return new File(context.getDataFile(""), "classes");
-        else
-            return new File(cacheLocation);
+        if (StringUtils.isBlank(cacheLocation)) return new File(context.getDataFile(""), "classes");
+        else return new File(cacheLocation);
     }
-
 }
