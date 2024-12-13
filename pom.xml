@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>org.apache.sling.commons.fsclassloader</artifactId>
-    <version>1.0.16</version>
+    <version>1.0.17-SNAPSHOT</version>
 
     <name>Apache Sling Commons FileSystem ClassLoader</name>
     <description>The Sling Commons FileSystem ClassLoader bundle provides a dynamic class loader for reading
@@ -37,7 +37,7 @@
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-commons-fsclassloader.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-commons-fsclassloader.git</developerConnection>
-        <tag>org.apache.sling.commons.fsclassloader-1.0.16</tag>
+        <tag>HEAD</tag>
         <url>https://github.com/apache/sling-org-apache-sling-commons-fsclassloader.git</url>
     </scm>
 
