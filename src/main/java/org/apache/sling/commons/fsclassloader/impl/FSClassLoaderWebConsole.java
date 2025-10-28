@@ -67,7 +67,7 @@ public class FSClassLoaderWebConsole extends AbstractServlet {
     private static final Logger LOG = LoggerFactory.getLogger(FSClassLoaderWebConsole.class);
 
     @Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
-    private transient ClassLoaderWriter classLoaderWriter;
+    private ClassLoaderWriter classLoaderWriter;
 
     /**
      * The root under which the class files are under
