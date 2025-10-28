@@ -18,12 +18,11 @@
  */
 package org.apache.sling.commons.fsclassloader.impl;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.sling.commons.classloader.ClassLoaderWriter;
 import org.junit.After;
 import org.junit.Test;

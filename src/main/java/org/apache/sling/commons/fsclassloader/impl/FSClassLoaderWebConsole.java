@@ -18,12 +18,6 @@
  */
 package org.apache.sling.commons.fsclassloader.impl;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,10 +26,14 @@ import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.webconsole.AbstractWebConsolePlugin;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.felix.webconsole.servlet.AbstractServlet;
 import org.apache.sling.commons.classloader.ClassLoaderWriter;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -59,7 +57,7 @@ import org.slf4j.LoggerFactory;
             "felix.webconsole.css=" + FSClassLoaderWebConsole.RES_LOC + "/prettify.css",
             "felix.webconsole.category=Sling"
         })
-public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
+public class FSClassLoaderWebConsole extends AbstractServlet {
 
     static final String APP_ROOT = "fsclassloader";
 
@@ -82,11 +80,6 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
     private static final long serialVersionUID = -5728679635644481848L;
 
     /**
-     * The servlet configuration
-     */
-    private ServletConfig config;
-
-    /**
      * Activate this component. Create the root directory.
      *
      * @param componentContext
@@ -97,14 +90,6 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
         // get the file root
         this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
     }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.servlet.Servlet#destroy()
-     */
-    @Override
-    public void destroy() {}
 
     /*
      * (non-Javadoc)
@@ -180,56 +165,6 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.felix.webconsole.AbstractWebConsolePlugin#getLabel()
-     */
-    @Override
-    public String getLabel() {
-        return "fsclassloader";
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.servlet.Servlet#getServletConfig()
-     */
-    @Override
-    public ServletConfig getServletConfig() {
-        return this.config;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.servlet.Servlet#getServletInfo()
-     */
-    @Override
-    public String getServletInfo() {
-        return "";
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.felix.webconsole.AbstractWebConsolePlugin#getTitle()
-     */
-    @Override
-    public String getTitle() {
-        return "File System Class Loader";
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see javax.servlet.Servlet#init(javax.servlet.ServletConfig)
-     */
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        this.config = config;
-    }
-
     /**
      * Checks whether the specified file is a file and is underneath the root
      * directory.
@@ -285,11 +220,11 @@ public class FSClassLoaderWebConsole extends AbstractWebConsolePlugin {
      * (non-Javadoc)
      *
      * @see
-     * org.apache.felix.webconsole.AbstractWebConsolePlugin#renderContent(javax
+     * org.apache.felix.webconsole.servlet.AbstractServlet#renderContent(javax
      * .servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
     @Override
-    protected void renderContent(HttpServletRequest request, HttpServletResponse response)
+    public void renderContent(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Map<String, ScriptFiles> scripts = new LinkedHashMap<String, ScriptFiles>();
         readFiles(root, root, scripts);
