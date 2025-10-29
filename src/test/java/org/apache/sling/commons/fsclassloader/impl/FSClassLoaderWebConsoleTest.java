@@ -27,6 +27,8 @@ import org.apache.sling.commons.classloader.ClassLoaderWriter;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.ComponentContext;
 import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.assertEquals;
@@ -94,8 +96,12 @@ public class FSClassLoaderWebConsoleTest {
     }
 
     private void setFixture(boolean clwReturn) {
-        console = spy(new FSClassLoaderWebConsole());
         classLoaderWriter = mock(ClassLoaderWriter.class);
+        ComponentContext componentContext = mock(ComponentContext.class);
+        BundleContext bundleContext = mock(BundleContext.class);
+        Mockito.doReturn(bundleContext).when(componentContext).getBundleContext();
+        FSClassLoaderComponentConfig config = mock(FSClassLoaderComponentConfig.class);
+        console = spy(new FSClassLoaderWebConsole(classLoaderWriter, componentContext, config));
         when(classLoaderWriter.delete("")).thenReturn(clwReturn);
         Whitebox.setInternalState(console, "classLoaderWriter", classLoaderWriter);
     }

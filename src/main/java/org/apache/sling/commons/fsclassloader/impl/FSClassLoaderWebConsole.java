@@ -66,8 +66,7 @@ public class FSClassLoaderWebConsole extends AbstractServlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(FSClassLoaderWebConsole.class);
 
-    @Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
-    private ClassLoaderWriter classLoaderWriter;
+    private final transient ClassLoaderWriter classLoaderWriter;
 
     /**
      * The root under which the class files are under
@@ -86,7 +85,12 @@ public class FSClassLoaderWebConsole extends AbstractServlet {
      *            the component context
      */
     @Activate
-    protected void activate(final ComponentContext componentContext, final FSClassLoaderComponentConfig config) {
+    public FSClassLoaderWebConsole(
+            @Reference(target = "(component.name=org.apache.sling.commons.fsclassloader.impl.FSClassLoaderProvider)")
+                    ClassLoaderWriter classLoaderWriter,
+            final ComponentContext componentContext,
+            final FSClassLoaderComponentConfig config) {
+        this.classLoaderWriter = classLoaderWriter;
         // get the file root
         this.root = CacheLocationUtils.getRootDir(componentContext.getBundleContext(), config);
     }
